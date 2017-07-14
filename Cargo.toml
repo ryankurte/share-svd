@@ -5,3 +5,6 @@ authors = ["Jamey Sharp <jamey@minilop.net>"]
 
 [dependencies]
 svd-parser = "0.5"
+getopts = "0.2"
+threadpool = "1.4.0"
+num_cpus = "1.6.2"
