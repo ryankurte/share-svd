@@ -59,8 +59,6 @@ fn main() {
         Err(f) => { panic!(f.to_string()) }
     };
 
-    println!("Loaded {:?} devices", device_count);
-
     analyse_peripherals(&families);
 
 }
@@ -77,7 +75,7 @@ fn get_family_peripherals(devices: DeviceList) -> PeripheralList {
         let defaults = device_inst.defaults.clone();
 
         let peripherals: PeripheralList = device_inst.peripherals.into_iter().flat_map(move |p| {
-            let path_name = format!("{}:{}", &device_name, p.name);
+            let path_name = format!("{}:{}", p.name, &device_name);
             p.registers.map(move |registers| {
                 (path_name, Peripheral::new(registers, &defaults).unwrap(), 1)
             })
@@ -94,9 +92,8 @@ fn deduplicate_peripherals(peripherals: &PeripheralList) -> PeripheralList{
     let mut set: BTreeMap<Peripheral, (String, usize)> = BTreeMap::new();
 
     for (name, periph, count) in peripherals.clone() {
-        set.entry(periph).or_insert_with(|| (name, count));
+        set.entry(periph).or_insert_with(|| (name, count)).1 += count;
     }
-    
     let mut deduped: PeripheralList= Vec::new();
     for (k, v) in set { deduped.push((v.0, k, v.1)); }
     
@@ -109,17 +106,37 @@ fn analyse_peripherals(families: &FamilyList) {
 
     println!("Analysing peripherals");
 
+    // Extract and deduplicate peripherals by family
     for (name, devices) in families.clone() {
 
         let f = get_family_peripherals(devices);
         let mut d = deduplicate_peripherals(&f);
 
-        println!("Family: {} Peripheral count: {} ({})", name, d.len(), f.len());
+        println!("Family: {} Peripheral count: {} unique ({} total)", name, d.len(), f.len());
         all_peripherals.append(&mut d);
     }
 
     let deduped_peripherals = deduplicate_peripherals(&all_peripherals);
 
     println!("Analysis complete");
-    println!("Overall: {} ({})", deduped_peripherals.len(), all_peripherals.len());
+    println!("Overall peripherals: {} unique ({} total)", deduped_peripherals.len(), all_peripherals.len());
+
+    // Extract peripheral instance names and counts from deduplicated overall array
+    let peripheral_names: Vec<(String, String, usize)> = deduped_peripherals.iter().map(|&ref p| {
+        let p1 = p.clone();
+        let name: Vec<&str> = p1.0.split(":").collect();
+        (String::from(name[0]), String::from(name[1]), p1.2)
+    }).collect();
+
+    // Group by peripheral name
+    let mut peripheral_list: BTreeMap<String, Vec<(String, usize)>>  = BTreeMap::new();
+    for (name, device, count) in peripheral_names.clone() {
+        peripheral_list.entry(name).or_insert_with(|| Vec::new()).push((device, count));
+    }
+
+    println!("Peripheral Overview:");
+    for (k, v) in &peripheral_list {
+        println!("    - {}\t\t{:?}", k, v);
+    }
+    
 }
