@@ -20,7 +20,7 @@ pub fn load_families(path: &str) -> io::Result<(FamilyList, usize)> {
         .map(|res| res.unwrap())
         .filter(|f| f.metadata().unwrap().is_dir())
         .map(|f| f.file_name().into_string().unwrap())
-        .filter(|f| !f.starts_with("."))
+        .filter(|f| !(f.starts_with(".") || f.starts_with("_")))
         .collect();
 
     println!("Discovered families: {:?}", families);
