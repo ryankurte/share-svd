@@ -88,7 +88,7 @@ fn get_family_peripherals(devices: DeviceList) -> PeripheralList {
 }
 
 // Deduplicate a list of peripherals
-fn deduplicate_peripherals(peripherals: &PeripheralList) -> PeripheralList{
+fn deduplicate_peripherals(peripherals: &PeripheralList) -> PeripheralList {
     let mut set: BTreeMap<Peripheral, (String, usize)> = BTreeMap::new();
 
     for (name, periph, count) in peripherals.clone() {
@@ -98,6 +98,20 @@ fn deduplicate_peripherals(peripherals: &PeripheralList) -> PeripheralList{
     for (k, v) in set { deduped.push((v.0, k, v.1)); }
     
     deduped
+}
+
+// Vec<String, String, usize, Vec<String, usize>>{
+fn find_relationships(peripherals: PeripheralList) {
+    let mut relationships : BTreeMap<String, (String, Vec<(String, usize)>)> = BTreeMap::new();
+
+    let mut grouped_peripherals: BTreeMap<String, Vec<(String, Peripheral, usize)>>  = BTreeMap::new();
+    for (name, peripheral, count) in peripherals.clone() {
+        let names: Vec<&str> = name.split(":").collect();
+        grouped_peripherals.entry(String::from(names[0])).or_insert_with(|| Vec::new()).push((String::from(names[1]), peripheral, count));
+    }
+
+
+
 }
 
 // Analyse peripherals across a family/device list.
