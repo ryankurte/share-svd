@@ -89,9 +89,9 @@ fn get_family_peripherals(devices: DeviceList) -> PeripheralList {
 fn deduplicate_peripherals(peripherals: &PeripheralList) -> PeripheralList {
     let mut set: BTreeMap<Peripheral, PeripheralInfo> = BTreeMap::new();
 
-    (*peripherals).clone().iter().map(|p| {
+    for p in peripherals.clone().iter() {
         set.entry(p.peripheral.clone()).or_insert_with(||(p.clone())).count += p.count;
-    });
+    }
 
     let mut deduped: PeripheralList = Vec::new();
     for (k, v) in set { deduped.push(v); }
