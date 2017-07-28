@@ -17,8 +17,26 @@ pub use self::register_info::*;
 mod peripheral;
 pub use self::peripheral::*;
 
+pub struct DeviceInfo {
+    pub name: String,
+    pub device: svd_parser::Device
+}
 
-#[derive(Ord, Eq, PartialOrd, PartialEq, Clone)]
+impl DeviceInfo {
+    pub fn new(name: String, device: svd_parser::Device) -> DeviceInfo {
+        DeviceInfo{name, device}
+    }
+}
+
+
+pub type PeripheralList = Vec<PeripheralInfo>;
+
+pub type DeviceList = Vec<(String, svd_parser::Device)>;
+
+pub type FamilyList = Vec<(String, DeviceList)>;
+
+
+#[derive(Ord, Eq, PartialOrd, PartialEq, Clone, Debug)]
 pub struct PeripheralInfo {
     pub name: String,
     pub device: String,
@@ -32,8 +50,56 @@ impl PeripheralInfo {
     }
 }
 
-pub type PeripheralList = Vec<PeripheralInfo>;
+#[derive(Debug)]
+pub struct PeripheralNode {
+    pub info: PeripheralInfo,
+    pub children: Vec<PeripheralNode>
+}
 
-pub type DeviceList = Vec<(String, svd_parser::Device)>;
+impl PeripheralNode {
+    pub fn reduce() {
 
-pub type FamilyList = Vec<(String, DeviceList)>;
+    }
+}
+
+#[derive(Debug)]
+pub struct PeripheralMap {
+    //pub base: PeripheralNode
+}
+
+impl From<PeripheralList> for PeripheralMap {
+    fn from(peripherals: PeripheralList) -> PeripheralMap {
+        if peripherals.len() == 1 {
+            return PeripheralMap{}
+        }
+
+        let nodes: Vec<PeripheralNode> = peripherals.clone().iter().map(|p| { 
+                PeripheralNode{info: p.clone(), children: Vec::new()}
+        }).collect();
+        let mut dependents: Vec<usize> = Vec::new();
+
+        // Extract commonalities from peripheral list
+        let mut common = nodes[0].info.peripheral.clone();
+        for (i, n) in (&nodes).iter().enumerate() {
+            if i == 0 {
+                continue;
+            }
+            common = common.extract_common(&n.info.peripheral);
+        }
+        print!("\t\t\t\tCommon: {} regs, diffs: [", common.len());
+
+        // Find diffs against commonality
+        for (i, n) in (&nodes).iter().enumerate() {
+            let diff = common.diff(&n.info.peripheral);
+            print!("({}: {} regs) ", n.info.device, diff.len());
+        }
+        println!("]");
+
+       return PeripheralMap{}
+    }
+}
+
+
+impl PeripheralMap {
+    
+}

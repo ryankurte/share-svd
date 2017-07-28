@@ -3,7 +3,7 @@ extern crate svd_parser;
 use std::*;
 use std::cmp::*;
 
-#[derive(Ord, Eq, PartialOrd, PartialEq, Clone)]
+#[derive(Ord, Eq, PartialOrd, PartialEq, Clone, Debug)]
 pub struct BitRange {
     pub offset: u32,
     pub width: u32,
